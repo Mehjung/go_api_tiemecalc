@@ -1,0 +1,14 @@
+### Anfrage 1
+GET http://localhost:8080/process
+
+### Anfrage 2
+GET http://localhost:8080/process
+
+### Anfrage 3
+GET http://localhost:8080/process
+
+### Anfrage 4
+GET http://localhost:8080/process
+
+### Anfrage 5
+GET http://localhost:8080/process
