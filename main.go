@@ -6,11 +6,12 @@ import (
 )
 
 func main() {
-    // Verwenden Sie Funktionen aus dem timemodule Modul
-    result,err := timemodule.ProcessString("7.48 + 6.30 - ( 5.20)")
-	if err != nil {
-		fmt.Println(err)
-	}
+    sp := timemodule.NewDefaultStringProcessor()
+    result, err := sp.ProcessString("7.48 + 6.30 - ( 5.20)")
+    if err != nil {
+        fmt.Println("Fehler beim Verarbeiten des Strings:", err)
+        return
+    }
 
-    fmt.Println(result)
+    fmt.Println("Ergebnis:", result)
 }
