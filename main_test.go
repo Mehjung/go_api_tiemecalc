@@ -99,11 +99,7 @@ func TestEndToEnd(t *testing.T) {
         },
 	}
 
-	sp := timemodule.NewStringProcessor(
-		new(timemodule.SimpleNumberExtractor),
-		new(timemodule.SimpleTimeConverter),
-		new(timemodule.SimpleExpressionEvaluator),
-	)
+	sp := timemodule.NewDefaultStringProcessor(	)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

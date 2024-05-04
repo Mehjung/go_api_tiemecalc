@@ -109,44 +109,80 @@ func replaceNumbersInString(s string, matches [][]int, numbers []float64) string
 }
 
 
+type StateMachine interface {
+    SetState(state string)
+    GetState() string
+}
+
+// SimpleStateMachine implementiert das StateMachine Interface.
+type SimpleStateMachine struct {
+    state string
+}
+
+func (sm *SimpleStateMachine) SetState(state string) {
+    sm.state = state
+}
+
+func (sm *SimpleStateMachine) GetState() string {
+    return sm.state
+}
+
 // StringProcessor beinhaltet alle Abhängigkeiten, die zum Verarbeiten von Strings benötigt werden.
 type StringProcessor struct {
     NumberExtractor
     TimeConverter
     ExpressionEvaluator
+    StateMachine
 }
 
 // NewStringProcessor erstellt eine neue Instanz von StringProcessor mit den gegebenen Abhängigkeiten.
-func NewStringProcessor(ne NumberExtractor, tc TimeConverter, ee ExpressionEvaluator) *StringProcessor {
+func NewStringProcessor(ne NumberExtractor, tc TimeConverter, ee ExpressionEvaluator, sm StateMachine) *StringProcessor {
     return &StringProcessor{
         NumberExtractor:    ne,
         TimeConverter:      tc,
         ExpressionEvaluator: ee,
+        StateMachine:       sm,
     }
 }
 
 // ProcessString verarbeitet den gegebenen String und gibt das Ergebnis zurück.
 func (sp *StringProcessor) ProcessString(s string) (string, error) {
-    numbers, err := sp.ExtractNumbers(s)
-    if err != nil {
-        return "", err
-    }
+    var numbers []float64
+    var result float64
+    var err error
 
-    for i, number := range numbers {
-        numbers[i] = sp.ConvertToDecimal(number)
+    sp.SetState("Extrahieren")
+    for {
+        switch sp.GetState() {
+        case "Extrahieren":
+            numbers, err = sp.ExtractNumbers(s)
+            if err != nil {
+                return "", err
+            }
+            sp.SetState("Konvertieren")
+        case "Konvertieren":
+            for i, number := range numbers {
+                numbers[i] = sp.ConvertToDecimal(number)
+            }
+            sp.SetState("Ersetzen")
+        case "Ersetzen":
+            s, err = ReplaceTimes(s, numbers)
+            if err != nil {
+                return "", err
+            }
+            sp.SetState("Auswerten")
+        case "Auswerten":
+            result, err = sp.EvaluateExpression(s)
+            if err != nil {
+                return "", err
+            }
+            sp.SetState("Fertig")
+        case "Fertig":
+            return sp.ConvertToTime(result), nil
+        default:
+            return "", fmt.Errorf("unbekannter Zustand: %s", sp.GetState())
+        }
     }
-
-    s, err = ReplaceTimes(s, numbers)
-    if err != nil {
-        return "", err
-    }
-
-    result, err := sp.EvaluateExpression(s)
-    if err != nil {
-        return "", err
-    }
-
-    return sp.ConvertToTime(result), nil
 }
 
 func NewDefaultStringProcessor() *StringProcessor {
@@ -154,5 +190,6 @@ func NewDefaultStringProcessor() *StringProcessor {
         new(SimpleNumberExtractor),
         new(SimpleTimeConverter),
         new(SimpleExpressionEvaluator),
+        new(SimpleStateMachine),
     )
 }
